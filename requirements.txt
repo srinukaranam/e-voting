@@ -3,4 +3,8 @@ Werkzeug
 Flask-SQLAlchemy
 Flask-Login
 SQLAlchemy
-python-dotenv=
+python-dotenv
+psycopg2-binary
+gunicorn
+email-validator
+bcrypt

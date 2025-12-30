@@ -6,14 +6,20 @@ import voter_routes
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+import atexit
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'fallback-secret-key-change-in-production')
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['DEBUG'] = os.getenv('DEBUG', False)
+
+# Configure upload folder for Render
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static', 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Ensure upload folder exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Register blueprints
 app.register_blueprint(admin_routes.admin_bp)
@@ -61,9 +67,16 @@ def not_found_error(error):
 def internal_error(error):
     return render_template('500.html'), 500
 
+def init_app():
+    """Initialize the application"""
+    # Initialize database
+    init_db()
+    
+    # Ensure static/uploads directory exists
+    if not os.path.exists('static/uploads'):
+        os.makedirs('static/uploads', exist_ok=True)
+
 if __name__ == '__main__':
-    if not os.path.exists("voting_system.db"):
-        init_db()
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
-    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=5000)
+    init_app()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
